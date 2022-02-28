@@ -18,6 +18,7 @@ router.get("/login", function (req, res) {
   res.render("login");
 });
 
+// start signup page
 router.post("/signup", async function (req, res) {
   const userData = req.body;
   // accessing form element.
@@ -26,6 +27,32 @@ router.post("/signup", async function (req, res) {
   // dash is not allowed to be a property inside of an object.
   const enteredConfirmEmail = userData["confirm-email"];
   const enteredPassword = userData.password;
+
+  // logic for checking the email, confirm email, and password are valid or not.
+  if (
+    !enteredEmail ||
+    !enteredConfirmEmail ||
+    !enteredPassword ||
+    enteredPassword.trim() < 6 ||
+    enteredEmail !== enteredConfirmEmail ||
+    !enteredEmail.includes("@") ||
+    !enteredConfirmEmail.includes("@")
+  ) {
+    console.log("Incorret data occurred");
+    return res.redirect("/signup");
+  }
+  // end of logic check
+
+  // checking for existing email does not allowed to register again
+  const existingUser = await db
+    .getDb()
+    .collection("users")
+    .findOne({ email: enteredEmail });
+
+  if (existingUser) {
+    console.log("User already exists");
+    return res.redirect("/signup");
+  }
 
   // second parameter represent how strong we want to secured the password and can't be decoded.
   // hash return a promise so we have to await
@@ -36,14 +63,46 @@ router.post("/signup", async function (req, res) {
     password: hashedPassword,
   };
 
-  console.log(user);
-
   await db.getDb().collection("users").insertOne(user);
 
   res.redirect("/login");
 });
+// end of signup page
 
-router.post("/login", async function (req, res) {});
+// start login page
+router.post("/login", async function (req, res) {
+  const userData = req.body;
+  const enteredEmail = userData.email;
+  const enteredPassword = userData.password;
+
+  // check email
+  const existingUser = await db
+    .getDb()
+    .collection("users")
+    .findOne({ email: enteredEmail });
+
+  if (!existingUser) {
+    return res.redirect("/login");
+  }
+  // end of check email
+
+  // check password that hashed by bcrypt
+  // compare function return a promise
+  const passwordsAreEqual = await bcrypt.compare(
+    enteredPassword,
+    existingUser.password
+  );
+
+  if (!passwordsAreEqual) {
+    return res.redirect("/login");
+  }
+  // end of check password
+
+  console.log("user is authenticated!");
+
+  res.redirect("/admin");
+});
+// end of login page
 
 router.get("/admin", function (req, res) {
   res.render("admin");
