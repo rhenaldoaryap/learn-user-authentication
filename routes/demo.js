@@ -1,4 +1,6 @@
 const express = require("express");
+// using bcryptjs for hashing password
+const bcrypt = require("bcryptjs");
 
 const db = require("../data/database");
 
@@ -25,13 +27,18 @@ router.post("/signup", async function (req, res) {
   const enteredConfirmEmail = userData["confirm-email"];
   const enteredPassword = userData.password;
 
+  // second parameter represent how strong we want to secured the password and can't be decoded.
+  // hash return a promise so we have to await
+  const hashedPassword = await bcrypt.hash(enteredPassword, 12);
+
   const user = {
     email: enteredEmail,
-    password: enteredPassword,
+    password: hashedPassword,
   };
 
-  await db.getDb().collection("users").insertOne(user);
   console.log(user);
+
+  await db.getDb().collection("users").insertOne(user);
 
   res.redirect("/login");
 });
