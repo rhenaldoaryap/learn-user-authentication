@@ -45,7 +45,7 @@ app.use(async function (req, res, next) {
   const isAuth = req.session.isAuthenticated;
 
   // check whether user is valid or not
-  // next function simply will move to next routes if the check succeed
+  // next function simply will move to next routes if the check succeedd
   if (!user || !isAuth) {
     return next();
   }
