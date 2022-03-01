@@ -105,7 +105,7 @@ router.post("/login", async function (req, res) {
   // make sure this session written in database (by default that will be)
   // but that will be danger if we already direct user to the admin page BEFORE the session is updated in the database
   // that will make user couldn't access the admin page although user has a valid credential for accessing the admin page
-  // storing something to database will take a time that might be a milisecond of second, in conclusion written to database will be asynchronous
+  // storing something to database will take a time that might be a milisecond or second, in conclusion written to database will be asynchronous
   req.session.save(function () {
     res.redirect("/admin");
   });
@@ -114,6 +114,11 @@ router.post("/login", async function (req, res) {
 // end of login page
 
 router.get("/admin", function (req, res) {
+  // start check whether user has a valid "ticket" for accessing protect page
+  if (!req.session.isAuthenticated) {
+    // alternative if we not storing optional flag if (!req.session.user)
+    return res.status(401).render("401");
+  }
   res.render("admin");
 });
 
