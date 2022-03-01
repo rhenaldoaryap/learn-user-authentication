@@ -11,7 +11,23 @@ router.get("/", function (req, res) {
 });
 
 router.get("/signup", function (req, res) {
-  res.render("signup");
+  // using inputData field as a key for storing the temporary value
+  let sessionInputData = req.session.inputData;
+
+  // checking user for the first time visiting signup page (include after visiting another page) so we set any values to empty initial states
+  if (!sessionInputData) {
+    sessionInputData = {
+      hasError: false,
+      email: "",
+      confirmEmail: "",
+      password: "",
+    };
+  }
+
+  // cleaning the session after user submit the valid data
+  req.session.inputData = null;
+
+  res.render("signup", { inputData: sessionInputData });
 });
 
 router.get("/login", function (req, res) {
@@ -38,8 +54,21 @@ router.post("/signup", async function (req, res) {
     !enteredEmail.includes("@") ||
     !enteredConfirmEmail.includes("@")
   ) {
-    console.log("Incorret data occurred");
-    return res.redirect("/signup");
+    // storing temporary value from user using session to preventing user re-type all of the values
+    // inputData is name field, for name of that field, we can give any name we want, because that just a field that will create automatically for us
+    req.session.inputData = {
+      hasError: true,
+      message: "Invalid input - please check your data.",
+      email: enteredEmail,
+      confirmEmail: enteredConfirmEmail,
+      password: enteredPassword,
+    };
+
+    // saving the temporary value in session collection
+    req.session.save(function () {
+      res.redirect("/signup");
+    });
+    return;
   }
   // end of logic check
 
@@ -105,7 +134,7 @@ router.post("/login", async function (req, res) {
   // make sure this session written in database (by default that will be)
   // but that will be danger if we already direct user to the admin page BEFORE the session is updated in the database
   // that will make user couldn't access the admin page although user has a valid credential for accessing the admin page
-  // storing something to database will take a time that might be a milisecond or second, in conclusion written to database will be asynchronous
+  // storing something to database will take a time that might be a milisecond or second, in conclusion written to database will be asynchronous that is why we using callback (the anonymous function)
   req.session.save(function () {
     res.redirect("/admin");
   });
@@ -122,6 +151,12 @@ router.get("/admin", function (req, res) {
   res.render("admin");
 });
 
-router.post("/logout", function (req, res) {});
+router.post("/logout", function (req, res) {
+  // cleaning the user session
+  req.session.user = null;
+  req.session.isAuthenticated = false;
+
+  res.redirect("/");
+});
 
 module.exports = router;
