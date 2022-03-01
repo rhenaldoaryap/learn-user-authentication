@@ -185,19 +185,23 @@ router.post("/login", async function (req, res) {
 
 router.get("/admin", async function (req, res) {
   // start check whether user has a valid "ticket" for accessing protect page
-  if (!req.session.isAuthenticated) {
+  // if (!req.session.isAuthenticated) {
+  // using res.locals to check isAuthenticated with other way
+  if (!res.locals.isAuth) {
     // alternative if we not storing optional flag if (!req.session.user)
     return res.status(401).render("401");
   }
 
   // fetching specific user from database
-  const user = await db
-    .getDb()
-    .collection("users")
-    .findOne({ _id: req.session.user.id });
+  // const user = await db
+  //   .getDb()
+  //   .collection("users")
+  //   .findOne({ _id: req.session.user.id });
 
   // check whether user is authentication and authorized or not
-  if (!user || !user.isAdmin) {
+  // if (!user || !user.isAdmin) {
+  // using res.locals to check isAdmin with other way
+  if (!res.locals.isAdmin) {
     return res.status(403).render("403");
   }
 
@@ -205,7 +209,9 @@ router.get("/admin", async function (req, res) {
 });
 
 router.get("/profile", function (req, res) {
-  if (!req.session.isAuthenticated) {
+  // if (!req.session.isAuthenticated) {
+  // using res.locals to check isAuthenticated with other way
+  if (!res.locals.isAuth) {
     return res.status(401).render("401");
   }
   res.render("profile");
