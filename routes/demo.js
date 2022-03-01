@@ -31,7 +31,19 @@ router.get("/signup", function (req, res) {
 });
 
 router.get("/login", function (req, res) {
-  res.render("login");
+  let sessionInputData = req.session.inputData;
+
+  if (!sessionInputData) {
+    sessionInputData = {
+      hasError: false,
+      email: "",
+      password: "",
+    };
+  }
+
+  req.session.inputData = null;
+
+  res.render("login", { inputData: sessionInputData });
 });
 
 // start signup page
@@ -79,8 +91,18 @@ router.post("/signup", async function (req, res) {
     .findOne({ email: enteredEmail });
 
   if (existingUser) {
-    console.log("User already exists");
-    return res.redirect("/signup");
+    req.session.inputData = {
+      hasError: true,
+      message: "This email has been registered, please use another one! :)",
+      email: enteredEmail,
+      confirmEmail: enteredConfirmEmail,
+      password: enteredPassword,
+    };
+
+    req.session.save(function () {
+      res.redirect("/signup");
+    });
+    return;
   }
 
   // second parameter represent how strong we want to secured the password and can't be decoded.
@@ -111,7 +133,17 @@ router.post("/login", async function (req, res) {
     .findOne({ email: enteredEmail });
 
   if (!existingUser) {
-    return res.redirect("/login");
+    req.session.inputData = {
+      hasError: true,
+      message: "Could not log you in - please check your credentials!",
+      email: enteredEmail,
+      password: enteredPassword,
+    };
+
+    req.session.save(function () {
+      res.redirect("/login");
+    });
+    return;
   }
   // end of check email
 
@@ -123,7 +155,16 @@ router.post("/login", async function (req, res) {
   );
 
   if (!passwordsAreEqual) {
-    return res.redirect("/login");
+    req.session.inputData = {
+      hasError: true,
+      message: "Could not log you in - please check you credentials!",
+      email: enteredEmail,
+      password: enteredPassword,
+    };
+    req.session.save(function () {
+      res.redirect("/login");
+    });
+    return;
   }
   // end of check password
 
