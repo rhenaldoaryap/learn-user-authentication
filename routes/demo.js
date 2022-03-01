@@ -136,19 +136,38 @@ router.post("/login", async function (req, res) {
   // that will make user couldn't access the admin page although user has a valid credential for accessing the admin page
   // storing something to database will take a time that might be a milisecond or second, in conclusion written to database will be asynchronous that is why we using callback (the anonymous function)
   req.session.save(function () {
-    res.redirect("/admin");
+    res.redirect("/profile");
   });
   // end of adding session
 });
 // end of login page
 
-router.get("/admin", function (req, res) {
+router.get("/admin", async function (req, res) {
   // start check whether user has a valid "ticket" for accessing protect page
   if (!req.session.isAuthenticated) {
     // alternative if we not storing optional flag if (!req.session.user)
     return res.status(401).render("401");
   }
+
+  // fetching specific user from database
+  const user = await db
+    .getDb()
+    .collection("users")
+    .findOne({ _id: req.session.user.id });
+
+  // check whether user is authentication and authorized or not
+  if (!user || !user.isAdmin) {
+    return res.status(403).render("403");
+  }
+
   res.render("admin");
+});
+
+router.get("/profile", function (req, res) {
+  if (!req.session.isAuthenticated) {
+    return res.status(401).render("401");
+  }
+  res.render("profile");
 });
 
 router.post("/logout", function (req, res) {
