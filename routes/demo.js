@@ -98,9 +98,18 @@ router.post("/login", async function (req, res) {
   }
   // end of check password
 
-  console.log("user is authenticated!");
-
-  res.redirect("/admin");
+  // start adding session is user login sucessfully
+  req.session.user = { id: existingUser._id, email: existingUser.email };
+  // below is optional flag we can add for adding more data
+  req.session.isAuthenticated = true;
+  // make sure this session written in database (by default that will be)
+  // but that will be danger if we already direct user to the admin page BEFORE the session is updated in the database
+  // that will make user couldn't access the admin page although user has a valid credential for accessing the admin page
+  // storing something to database will take a time that might be a milisecond of second, in conclusion written to database will be asynchronous
+  req.session.save(function () {
+    res.redirect("/admin");
+  });
+  // end of adding session
 });
 // end of login page
 
